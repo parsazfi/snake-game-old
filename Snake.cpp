@@ -2,7 +2,7 @@
 #include <conio.h>
 
 int const WIDTH = 400, HEIGHT = 330;
-int const PrizeColor = 12;
+int const PrizeColor = 10;
 int const SnakeColor = COLOR(255, 0, 0);
 int const TextStartColor = COLOR(255, 128, 128);
 int const TextStartUpColor = COLOR(255, 0, 0);
@@ -16,6 +16,7 @@ int r = 5;
 int len;
 int dist = 2 * r;
 int sX = dist; //LeftRight
+int prizeX = -1, prizeY = -1;
 int sY = 0; //UpDown
 
 void StartUp()
@@ -57,6 +58,26 @@ void StartUp()
 	}
 }
 
+void GeneratePrize()
+{
+	prizeX = ((rand() % 36) + 2) * 10;
+	prizeY = ((rand() % 26) + 5) * 10;
+
+	setfillstyle(9, PrizeColor);
+	fillellipse(prizeX, prizeY , r+1, r+1);
+}
+
+void CheckPrize(int x, int y)
+{
+	if ((x == prizeX) && (y == prizeY))
+	{
+		len++;
+		setfillstyle(9, BackgroundColor);
+		fillellipse(prizeX, prizeY , r+1, r+1);
+		GeneratePrize();
+	}
+}
+
 void SnakeMoving (int x[], int y[], char state = '0') // r: right, l: left, u: up, d: down, 0: nothing
 {
 	if (len == -1)
@@ -75,6 +96,8 @@ void SnakeMoving (int x[], int y[], char state = '0') // r: right, l: left, u: u
 			y[i] = y[i-1] - sY;
 			fillellipse(x[i], y[i] ,r ,r);
 		}
+
+		GeneratePrize();
 	}
 	else
 	{
@@ -93,6 +116,8 @@ void SnakeMoving (int x[], int y[], char state = '0') // r: right, l: left, u: u
 		
 		if (y[0] < 30) y[0] = HEIGHT - 10;
 		else if (y[0] > HEIGHT - 10) y[0] = 30;
+
+		CheckPrize(x[0], y[0]);
 
 		setfillstyle(1, SnakeColor);
 		fillellipse(x[0], y[0] ,r ,r);
@@ -137,8 +162,8 @@ void Game ()
 
 	int key;
 
-	int x [MAX_SIZE];
-	int y [MAX_SIZE];
+	int x [MAX_SIZE] = {MAX_SIZE};
+	int y [MAX_SIZE] = {MAX_SIZE};
 	
 	int  _delay = speed;
 	len = -1;
