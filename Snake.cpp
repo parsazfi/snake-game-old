@@ -7,6 +7,7 @@ Year: 2023
 #include <graphics.h>
 #include <conio.h>
 #include <iostream>
+#include <fstream>
 
 using namespace std;
 
@@ -29,7 +30,7 @@ int const prizeRate = 20;
 int const MAX_SIZE = 1000;
 int const LEN = 5;
 int score;
-int highScore = 0;
+int highScore;
 int r = 5;
 
 // I recommend you to not change these varibales (unless you know what you doing!)
@@ -124,6 +125,44 @@ void CheckPrize(int x, int y)
 	}
 }
 
+int LoadData()
+{
+	fstream file;
+    file.open("data.txt", ios::in);
+	if (!file) {
+		file.close();
+		return 0;
+	}
+	else
+	{
+		string value = "";
+		char ch;
+
+		while (1) {
+			file >> ch;
+			if (file.eof())
+				break;
+			value += ch;
+		}
+		file.close();
+
+		for (int i = 0; i < value.length(); i++)
+			if (!isdigit(value[i]))
+				return 0;
+		
+		highScore = stoi(value);
+		return highScore;
+	}
+}
+
+void SaveData(int value)
+{
+	fstream file;
+    file.open("data.txt", ios::out);
+    file << value;
+    file.close();
+}
+
 void GameOver (int x[], int y[])
 {
 	bool flag = false;
@@ -155,6 +194,7 @@ void GameOver (int x[], int y[])
 	if (score > highScore)
 	{
 		highScore = score;
+		SaveData(highScore);
 	}
 	
 	outtextxy(WIDTH / 2, HEIGHT / 2 - 20, (char*)"Game Over");
@@ -354,6 +394,7 @@ int main(int argc, char const *argv[])
     HWND Handle = GetConsoleWindow();
 	ShowWindow(Handle ,SW_HIDE);
     initwindow (WIDTH, HEIGHT, "Snake", 300, 300);
+	highScore = LoadData();
 
     // Start up window
     StartUp();
