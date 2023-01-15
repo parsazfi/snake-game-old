@@ -6,13 +6,13 @@ Year: 2023
 
 #include <graphics.h>
 #include <conio.h>
-#include <iostream>
 #include <fstream>
+#include <time.h>
 
 using namespace std;
 
-// You can change the value of these variables
-int const WIDTH = 400, HEIGHT = 330;
+/* You can change the value of these variables */
+int const WIDTH = 410, HEIGHT = 330;
 int const PrizeColor = 10;
 int const SnakeColor = COLOR(255, 0, 0);
 int const TextStartColor = COLOR(255, 128, 128);
@@ -20,26 +20,30 @@ int const TextStartUpColor = COLOR(255, 0, 0);
 int const TextStyle1Color = COLOR(255, 0, 0);
 int const TextStyle2Color = COLOR(0, 0, 0);
 int const BackgroundColor = COLOR(35, 35, 35);
-int const PanelColor = COLOR(255, 128, 128);;
+int const PanelColor = COLOR(255, 128, 128);
 
 int const PrizeLine = 22;
 int const firstSpeed = 160;
-int const maxSpeed = 40;
-int const speedRate = 5;
 int const prizeRate = 20;
-int const MAX_SIZE = 1000;
+
+int const _delay = 2;
+int const firstTime = 15;
+int const timeRate = 1;
+int const minTime = 4;
 int const LEN = 5;
+
+/* I recommend you to not change these varibales (unless you know what you doing!) */
+int const MAX_SIZE = 1200;
 int score;
 int highScore;
 int r = 5;
-
-// I recommend you to not change these varibales (unless you know what you doing!)
 int len;
 int dist = 2 * r;
 int sX = dist; // Left and Right
-int prizeX = -1, prizeY = -1;
 int sY = 0; // Up and Down
-int _delay;
+int prizeX = -1, prizeY = -1;
+int _time;
+int code;
 bool isPlaying;
 bool isRunning = true;
 
@@ -85,46 +89,6 @@ void StartUp()
 	}
 }
 
-char* Score()
-{
-	string s = to_string(score);
-	return strcpy (new char[s.length() + 1], s.c_str());
-}
-
-void UpdateScore(int value = 0)
-{
-	setcolor(TextStyle1Color);
-
-	score += value;
-	settextstyle(9, 0, 1);	
-	outtextxy(200, 17, Score());
-	
-	setcolor (BackgroundColor);
-}
-
-void GeneratePrize()
-{
-	prizeX = ((rand() % 36) + 2) * 10;
-	prizeY = ((rand() % 26) + 5) * 10;
-
-	setfillstyle(9, PrizeColor);
-	fillellipse(prizeX, prizeY , r+1, r+1);
-}
-
-void CheckPrize(int x, int y)
-{
-	if ((x == prizeX) && (y == prizeY))
-	{
-		len++;
-		if (_delay > maxSpeed) _delay -= speedRate;
-		setfillstyle(9, BackgroundColor);
-		fillellipse(prizeX, prizeY , r+1, r+1);
-		GeneratePrize();
-
-		UpdateScore(prizeRate);
-	}
-}
-
 int LoadData()
 {
 	fstream file;
@@ -163,8 +127,70 @@ void SaveData(int value)
     file.close();
 }
 
+void Win()
+{
+	isPlaying = false;
+	
+	if (score > highScore)
+	{
+		highScore = score;
+		SaveData(highScore);
+	}
+
+	delay (300);
+	setfillstyle(1, PanelColor);
+	bar (WIDTH / 2 - 135, HEIGHT / 2 - 75, WIDTH / 2 + 135, HEIGHT / 2 + 75);
+
+	setfillstyle(1, BackgroundColor);
+	setlinestyle(0,0,0);
+	rectangle (WIDTH / 2 - 130, HEIGHT / 2 - 70, WIDTH / 2 + 130, HEIGHT / 2 + 70);
+	
+	
+	delay (500);
+	string message = "Highscore: " + to_string(highScore);
+	char * m = new char [message.length() + 1];
+	setbkcolor(PanelColor);
+	setcolor(TextStyle2Color);
+	settextstyle(8, 0, 2);
+	outtextxy(WIDTH / 2, HEIGHT / 2 + 15, strcpy(m, message.c_str()));
+	settextstyle(8, 0, 1);
+	outtextxy(WIDTH / 2, HEIGHT / 2 + 45, (char*)"Press R to reset");
+	settextstyle(10, 0, 5);
+	setfillstyle(1, PanelColor);
+
+	bool flag = false;
+	while (true)
+	{
+		outtextxy(WIDTH / 2, HEIGHT / 2 - 20, (char*)"You win!");
+		if (kbhit())
+		{
+			code = getch();
+			if (code == 'r')
+			{
+				break;
+			}
+			else if (code == 27)
+			{
+				isRunning = false;
+				break;
+			}
+		}
+
+		delay(300);
+		bar(WIDTH / 2 - 100, HEIGHT / 2 - 50, WIDTH / 2 + 100, HEIGHT / 2);
+		
+		delay(350);
+	}
+}
+
 void GameOver (int x[], int y[])
 {
+	if (score > highScore)
+	{
+		highScore = score;
+		SaveData(highScore);
+	}
+
 	bool flag = false;
 	for (int i = 0; i < 8; i++)
 	{
@@ -187,16 +213,10 @@ void GameOver (int x[], int y[])
 	rectangle (WIDTH / 2 - 130, HEIGHT / 2 - 70, WIDTH / 2 + 130, HEIGHT / 2 + 70);
 
 	delay (500);
+	
 	setbkcolor(PanelColor);
 	setcolor(TextStyle2Color);
 	settextstyle(10, 0, 5);
-	
-	if (score > highScore)
-	{
-		highScore = score;
-		SaveData(highScore);
-	}
-	
 	outtextxy(WIDTH / 2, HEIGHT / 2 - 20, (char*)"Game Over");
 	settextstyle(8, 0, 1);
 	string message = "Highscore: " + to_string(highScore);
@@ -205,6 +225,61 @@ void GameOver (int x[], int y[])
 	outtextxy(WIDTH / 2, HEIGHT / 2 + 15, strcpy(m, message.c_str()));
 	settextstyle(8, 0, 1);
 	outtextxy(WIDTH / 2, HEIGHT / 2 + 45, (char*)"Press R to reset");
+}
+
+char* Score()
+{
+	string s = to_string(score);
+	return strcpy (new char[s.length() + 1], s.c_str());
+}
+
+void UpdateScore(int value = 0)
+{
+	setcolor(TextStyle1Color);
+
+	score += value;
+	settextstyle(9, 0, 1);	
+	outtextxy(WIDTH/2, PrizeLine - 5, Score());
+	
+	setcolor (BackgroundColor);
+}
+
+bool isOverlapped;
+
+void GeneratePrize(int x[], int y[])
+{
+	do
+	{
+		isOverlapped = false;
+		prizeX = ((rand() % 32) + 5) * 10;
+		prizeY = ((rand() % 22) + 6) * 10;
+
+		for (int i = 0; i < len; i++)
+			if ((x[i] == prizeX) && (y[i] == prizeY))
+			{
+				isOverlapped = true;
+				break;
+			}
+		
+	} while (isOverlapped);
+
+	setfillstyle(9, PrizeColor);
+	fillellipse(prizeX, prizeY , r+1, r+1);
+}
+
+void CheckPrize(int x[], int y[])
+{
+	if ((x[0] == prizeX) && (y[0] == prizeY))
+	{
+		len++;
+		if (len == MAX_SIZE) Win();
+		if (_time > minTime) _time -= timeRate;
+		setfillstyle(9, BackgroundColor);
+		fillellipse(prizeX, prizeY , r+1, r+1);
+		GeneratePrize(x, y);
+
+		UpdateScore(prizeRate);
+	}
 }
 
 void CheckBite (int x[], int y[])
@@ -219,7 +294,7 @@ void CheckBite (int x[], int y[])
 			{
 				if (kbhit())
 				{
-					int code = getch();
+					code = getch();
 					if (code == 'r')
 					{
 						break;
@@ -240,29 +315,35 @@ void SnakeMoving (int x[], int y[])
 {
 	if (len == -1) // Run in first time
 	{
-		len = LEN;
+	
+		srand(time(0)); // To give the randomize varibale more real random value
 
-		x[0] = 200;
-		y[0] = 200;
+		x[0] = ((rand() % 36) + 2) * 10;
+		y[0] = ((rand() % 26) + 5) * 10;
+
+		len = LEN;
 		
 		setfillstyle(1, SnakeColor);
 		fillellipse(x[0], y[0], r, r);
 
 		for (int i = 1; i < len; i++)
-		{		
+		{
 			x[i] = x[i-1] - sX;
 			y[i] = y[i-1] - sY;
 			fillellipse(x[i], y[i] ,r ,r);
 		}
 
-		GeneratePrize();
+		GeneratePrize(x, y);
 	}
 	else // run after first time
 	{
+		//if ((x[len-1] != prizeX) || (y[len-1] != prizeY))
+
 		setfillstyle(1, BackgroundColor);
-		fillellipse(x[len-1], y[len-1] ,r ,r);
+		fillellipse(x[len-1], y[len-1], r ,r);
+
 		for (int i = len - 1; i > 0; i--)
-		{		
+		{
 			x[i] = x[i-1];
 			y[i] = y[i-1];
 		}
@@ -275,7 +356,7 @@ void SnakeMoving (int x[], int y[])
 		if (y[0] < 30) y[0] = HEIGHT - 10;
 		else if (y[0] > HEIGHT - 10) y[0] = 30;
 
-		CheckPrize(x[0], y[0]);
+		CheckPrize(x, y);
 
 		setfillstyle(1, SnakeColor);
 		fillellipse(x[0], y[0] ,r ,r);
@@ -344,6 +425,7 @@ void Pause(int x[], int y[])
 
 void Game ()
 {
+	bool hit;
 	while (isRunning)
 	{
 		setbkcolor (BackgroundColor);
@@ -364,14 +446,30 @@ void Game ()
 		int x [MAX_SIZE] = {MAX_SIZE};
 		int y [MAX_SIZE] = {MAX_SIZE};
 		
-		_delay = firstSpeed;
+		_time = firstTime;
 		len = -1;
 
 		isPlaying = true;
+
+		SnakeMoving(x, y); // Generate snake shape for first time
+
 		while (isPlaying)
 		{
-			if (kbhit())
-				switch (key = getch())
+
+			hit = false;
+			for(int i = 0; i < _time; i++) // for prevent slowing down the getting buggy I put the buffer in loop
+			{
+			    delay(_delay);
+				if (kbhit())
+				{
+					hit = true;
+					key = getch();
+		    	}
+		    }
+
+			if (hit)
+			{
+				switch (key)
 				{
 					case 'p':
 						Pause(x, y);
@@ -381,23 +479,21 @@ void Game ()
 						ChangeDirection(key);
 						break;
 				}
-
+			} 
 			SnakeMoving(x, y);
-			delay (_delay); 
 		}
 	}
-	
 }
 
 int main(int argc, char const *argv[])
 {
-    HWND Handle = GetConsoleWindow();
+	HWND Handle = GetConsoleWindow();
 	ShowWindow(Handle ,SW_HIDE);
-    initwindow (WIDTH, HEIGHT, "Snake", 300, 300);
+	initwindow (WIDTH, HEIGHT, "Snake", 300, 300);
 	highScore = LoadData();
 
-    // Start up window
-    StartUp();
+	// Start up window
+	StartUp();
 
 	// Run the game
 	Game();
